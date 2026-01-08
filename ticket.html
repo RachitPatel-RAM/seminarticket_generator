@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Seminar Ticket Confirmation</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Theme Config -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1919e6",
+                        "primary-dark": "#1313b0",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111121",
+                        "ticket-bg": "#ffffff",
+                        "ticket-bg-dark": "#1a1a2e",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        'ticket': '0 10px 40px -10px rgba(0,0,0,0.1)',
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display min-h-screen flex flex-col text-[#0e0e1b] dark:text-gray-100 transition-colors duration-200">
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col items-center justify-center p-4 sm:p-8">
+        <!-- Ticket Card Container -->
+        <div
+            class="w-full max-w-[600px] bg-ticket-bg dark:bg-ticket-bg-dark rounded-3xl shadow-ticket overflow-hidden relative group/ticket border border-gray-100 dark:border-gray-800">
+            <!-- Decorative Header Stripe -->
+            <div class="h-3 w-full bg-gradient-to-r from-primary to-purple-600"></div>
+            <!-- Ticket Header -->
+            <div class="px-8 pt-8 pb-6 text-center">
+                <div
+                    class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
+                    <span class="material-symbols-outlined text-2xl">confirmation_number</span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-[#0e0e1b] dark:text-white tracking-tight leading-tight">
+                    AI in Healthcare Seminar 2024
+                </h1>
+                <p class="mt-2 text-gray-500 dark:text-gray-400 text-sm font-medium uppercase tracking-widest">
+                    Registration Confirmed</p>
+            </div>
+            <!-- Decorative Divider Line -->
+            <div class="px-8 w-full flex justify-center">
+                <div class="w-full border-t border-dashed border-gray-300 dark:border-gray-700 h-1"></div>
+            </div>
+            <!-- Main Details Section -->
+            <div class="px-8 py-6">
+                <!-- Ticket ID Highlight -->
+                <div
+                    class="bg-primary/5 border border-primary/20 rounded-xl p-4 flex flex-col items-center justify-center mb-8">
+                    <span class="text-primary text-xs font-bold uppercase tracking-widest mb-1">Ticket ID</span>
+                    <span
+                        class="text-[#0e0e1b] dark:text-white text-2xl sm:text-3xl font-mono font-bold tracking-tight">#SEM-88392</span>
+                </div>
+                <!-- Personal Details Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
+                    <div class="flex flex-col gap-1">
+                        <label
+                            class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                            <span class="material-symbols-outlined text-[16px]">person</span> Name
+                        </label>
+                        <p class="text-[#0e0e1b] dark:text-white text-base font-semibold truncate">Rahul Sharma</p>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label
+                            class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                            <span class="material-symbols-outlined text-[16px]">mail</span> Email
+                        </label>
+                        <p class="text-[#0e0e1b] dark:text-white text-base font-semibold truncate">rahul.s@example.com
+                        </p>
+                    </div>
+                    <div class="flex flex-col gap-1 sm:col-span-2">
+                        <label
+                            class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                            <span class="material-symbols-outlined text-[16px]">call</span> Phone
+                        </label>
+                        <p class="text-[#0e0e1b] dark:text-white text-base font-semibold">+91 98765 43210</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Perforation / Tear-off Effect -->
+            <div class="relative flex items-center w-full h-8 my-2">
+                <div
+                    class="absolute left-0 w-4 h-8 bg-background-light dark:bg-background-dark rounded-r-full -ml-[1px]">
+                </div>
+                <div class="w-full border-b-2 border-dashed border-gray-200 dark:border-gray-700 mx-6"></div>
+                <div
+                    class="absolute right-0 w-4 h-8 bg-background-light dark:bg-background-dark rounded-l-full -mr-[1px]">
+                </div>
+            </div>
+            <!-- Footer Section (Date, Location, Disclaimer) -->
+            <div class="px-8 pt-4 pb-8 bg-gray-50/50 dark:bg-white/5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+                    <div class="flex items-start gap-3">
+                        <div
+                            class="mt-1 p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+                            <span class="material-symbols-outlined block">calendar_month</span>
+                        </div>
+                        <div>
+                            <p
+                                class="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider mb-0.5">
+                                Date &amp; Time</p>
+                            <p class="text-[#0e0e1b] dark:text-white font-semibold">October 15, 2024</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">09:00 AM - 05:00 PM</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div
+                            class="mt-1 p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+                            <span class="material-symbols-outlined block">location_on</span>
+                        </div>
+                        <div>
+                            <p
+                                class="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider mb-0.5">
+                                Location</p>
+                            <p class="text-[#0e0e1b] dark:text-white font-semibold">Grand Convention Center</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Bengaluru, Karnataka</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Disclaimer -->
+                <div
+                    class="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20 rounded-lg p-3 flex items-start gap-3">
+                    <span
+                        class="material-symbols-outlined text-yellow-600 dark:text-yellow-500 text-sm mt-0.5">info</span>
+                    <p class="text-xs sm:text-sm text-yellow-800 dark:text-yellow-400 leading-snug">
+                        This ticket confirms your registration. Please verify your ID at the entrance counter.
+                    </p>
+                </div>
+            </div>
+            <!-- Action Buttons -->
+            <div
+                class="px-8 py-6 bg-white dark:bg-ticket-bg-dark border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row gap-4">
+                <button
+                    class="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold py-3 px-6 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-primary/20">
+                    <span class="material-symbols-outlined text-[20px]">download</span>
+                    <span>Download Ticket</span>
+                </button>
+                <button
+                    class="flex-1 flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-[#0e0e1b] dark:text-white font-semibold py-3 px-6 rounded-xl transition-all active:scale-[0.98]">
+                    <span>Go Back</span>
+                </button>
+            </div>
+        </div>
+        <!-- Additional Print/Help Link -->
+        <div class="mt-6 text-center">
+            <a class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary transition-colors"
+                href="#">
+                <span class="material-symbols-outlined text-[16px]">print</span>
+                Need a printable version?
+            </a>
+        </div>
+    </main>
+</body>
+
+</html>
