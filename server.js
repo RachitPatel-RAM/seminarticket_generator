@@ -22,6 +22,7 @@ cloudinary.config({
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Handle form data
 app.use(express.static(__dirname)); // Serve static files from root
 
 // Ensure uploads directory exists (for temporary storage)
@@ -191,10 +192,50 @@ app.post('/api/register', upload.single('paymentProof'), async (req, res) => {
 // 2. Admin Login
 // 2. Admin Login (Removed)
 
-// 4. Download Excel (Optional public access or removed if strictly local)
-// Keeping simple download route if needed, otherwise removing as per request.
-// User said "no need /admin", implying the whole UI. 
-// I will keep the server clean.
+// 4. Secure Admin Download Route
+app.get('/admin', (req, res) => {
+    const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Admin Access</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    </head>
+    <body class="bg-gray-50 flex items-center justify-center h-screen font-['DM_Sans']">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm border border-gray-100">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Admin Download</h2>
+            <form action="/admin" method="POST" class="space-y-4">
+                <div>
+                    <input type="password" name="password" placeholder="Enter Admin Password" required 
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" autofocus>
+                </div>
+                <button type="submit" 
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98]">
+                    Download Data
+                </button>
+            </form>
+        </div>
+    </body>
+    </html>
+    `;
+    res.send(html);
+});
+
+app.post('/admin', (req, res) => {
+    const { password } = req.body;
+    if (password === 'admin@123') {
+        if (fs.existsSync(CSV_FILE)) {
+            res.download(CSV_FILE, 'registrations.csv');
+        } else {
+            res.status(404).send('No data found yet.');
+        }
+    } else {
+        res.status(401).send('<h1 style="color:red;text-align:center;margin-top:20%">Incorrect Password! <a href="/admin">Try Again</a></h1>');
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
