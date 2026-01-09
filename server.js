@@ -44,17 +44,24 @@ app.use(express.urlencoded({ extended: true })); // Handle form data
 app.use((req, res, next) => {
     res.setHeader(
         "Content-Security-Policy",
-        "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; " +
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-        "font-src 'self' https://fonts.gstatic.com https://seminarticket-generator.vercel.app data:; " +
-        "img-src 'self' data: blob: https://res.cloudinary.com; " +
-        "connect-src 'self' https://seminarticket-default-rtdb.firebaseio.com https://identitytoolkit.googleapis.com securetoken.googleapis.com;"
+        "default-src 'self' * data: blob: 'unsafe-inline' 'unsafe-eval'; " +
+        "script-src 'self' * 'unsafe-inline' 'unsafe-eval'; " +
+        "style-src 'self' 'unsafe-inline' *; " +
+        "font-src 'self' * data:; " +
+        "img-src 'self' * data: blob:; " +
+        "connect-src 'self' *;"
     );
     next();
 });
 
-app.use(express.static(path.join(__dirname))); // Serve static files
+// Serve Static Files
+// Use process.cwd() for Vercel path resolution
+app.use(express.static(path.join(process.cwd())));
+
+// Explicitly serve index.html for root
+app.get('/', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'index.html'));
+});
 
 // Ensure uploads directory exists (for temporary storage)
 const isVercel = process.env.VERCEL === '1';
