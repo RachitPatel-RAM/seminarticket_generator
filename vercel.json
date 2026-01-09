@@ -5,5 +5,10 @@
             "source": "/(.*)",
             "destination": "/server.js"
         }
-    ]
+    ],
+    "functions": {
+        "server.js": {
+            "includeFiles": "qr_code.png,index.html"
+        }
+    }
 }

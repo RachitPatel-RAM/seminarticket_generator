@@ -63,6 +63,19 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'index.html'));
 });
 
+// Explicitly serve QR Code
+app.get('/qr_code.png', (req, res) => {
+    const imagePath = path.join(process.cwd(), 'qr_code.png');
+    if (fs.existsSync(imagePath)) {
+        res.sendFile(imagePath);
+    } else {
+        res.status(404).send('QR Code not found');
+    }
+});
+
+// Handle favicon.ico to prevent 404s
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // Ensure uploads directory exists (for temporary storage)
 const isVercel = process.env.VERCEL === '1';
 const uploadDir = isVercel ? path.join('/tmp', 'uploads') : path.join(__dirname, 'uploads');
