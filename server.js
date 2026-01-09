@@ -39,6 +39,21 @@ cloudinary.config({
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Handle form data
+
+// Set Security Headers (CSP)
+app.use((req, res, next) => {
+    res.setHeader(
+        "Content-Security-Policy",
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; " +
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+        "font-src 'self' https://fonts.gstatic.com https://seminarticket-generator.vercel.app data:; " +
+        "img-src 'self' data: blob: https://res.cloudinary.com; " +
+        "connect-src 'self' https://seminarticket-default-rtdb.firebaseio.com https://identitytoolkit.googleapis.com securetoken.googleapis.com;"
+    );
+    next();
+});
+
 app.use(express.static(path.join(__dirname))); // Serve static files
 
 // Ensure uploads directory exists (for temporary storage)
