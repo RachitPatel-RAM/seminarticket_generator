@@ -1,40 +1,62 @@
 const express = require('express');
 const multer = require('multer');
-const ExcelJS = require('exceljs');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const axios = require('axios');
-const FormData = require('form-data');
+
+// Firebase Imports
+const { initializeApp } = require("firebase/app");
+const { getDatabase, ref, push, get, child, set } = require("firebase/database");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Cloudinary Config
+// --- Firebase Configuration ---
+const firebaseConfig = {
+    apiKey: "AIzaSyAWYjDwTHNKMGjthA0LX2azQa9rS9VoSmA",
+    authDomain: "seminarticket.firebaseapp.com",
+    projectId: "seminarticket",
+    storageBucket: "seminarticket.firebasestorage.app",
+    messagingSenderId: "817760101906",
+    appId: "1:817760101906:web:40e9561bd180566e4d5acb",
+    measurementId: "G-CLE9EE1794",
+    databaseURL: "https://seminarticket-default-rtdb.firebaseio.com/"
+};
+
+// Initialize Firebase
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getDatabase(firebaseApp);
+
+// --- Cloudinary Config ---
 const cloudinary = require('cloudinary').v2;
-
 cloudinary.config({
     cloud_name: 'dpv1ulroy',
     api_key: '753843896383315',
     api_secret: 'MSmNF__TeFRS97eghntdWZksArE'
 });
 
-// Middleware
+// --- Middleware ---
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Handle form data
-app.use(express.static(__dirname)); // Serve static files from root
+app.use(express.static(path.join(__dirname))); // Serve static files
 
 // Ensure uploads directory exists (for temporary storage)
-const uploadDir = path.join(__dirname, 'uploads');
+const isVercel = process.env.VERCEL === '1';
+const uploadDir = isVercel ? path.join('/tmp', 'uploads') : path.join(__dirname, 'uploads');
+
 if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
+    try {
+        fs.mkdirSync(uploadDir, { recursive: true });
+    } catch (err) {
+        console.error("Error creating upload dir:", err);
+    }
 }
 
-// Multer Config for Temporary Image Storage
+// --- Multer Config ---
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/');
+        cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -50,73 +72,22 @@ const upload = multer({
         if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
             cb(null, true);
         } else {
-            cb(null, false);
-            return cb(new Error('Only .png, .jpg and .jpeg format allowed!'));
+            cb(new Error('Only .png, .jpg and .jpeg format allowed!'));
         }
     }
 });
 
-// CSV Initialization
-const CSV_FILE = path.join(__dirname, 'registrations.csv');
+// --- Helper Functions ---
 
-async function appendToExcel(data) {
-    console.log(`[CSV] Starting append process for ${data.name} (${data.ticketId})`);
-
-    const headers = 'Sr No,Ticket ID,Full Name,Email,Phone,Payment Screenshot,Timestamp\n';
-
-    // Check if file exists to determine if we need a header
-    let fileExists = fs.existsSync(CSV_FILE);
-    let srNo = 1;
-
-    if (!fileExists) {
-        console.log('[CSV] Creating new file with header...');
-        fs.writeFileSync(CSV_FILE, headers);
-    } else {
-        // Calculate Sr No by counting lines
-        try {
-            const content = fs.readFileSync(CSV_FILE, 'utf8');
-            const lines = content.trim().split('\n');
-            const lastLine = lines[lines.length - 1];
-            if (lines.length > 1) {
-                // Try to get SrNo from last line
-                const lastSrNo = parseInt(lastLine.split(',')[0]);
-                if (!isNaN(lastSrNo)) {
-                    srNo = lastSrNo + 1;
-                }
-            }
-        } catch (err) {
-            console.error('[CSV] Error reading row count:', err);
-        }
-    }
-
-    // Escape fields that might contain commas
-    const safeName = `"${data.name.replace(/"/g, '""')}"`;
-    const safeEmail = `"${data.email.replace(/"/g, '""')}"`;
-    const safePhone = `"${data.phone.replace(/"/g, '""')}"`;
-
-    const row = `${srNo},${data.ticketId},${safeName},${safeEmail},${safePhone},${data.screenshotUrl},${new Date().toLocaleString()}\n`;
-
-    try {
-        fs.appendFileSync(CSV_FILE, row);
-        console.log(`[CSV] Successfully wrote row ${srNo} to ${CSV_FILE}`);
-    } catch (writeErr) {
-        console.error('[CSV] Write Error:', writeErr);
-        throw writeErr;
-    }
-}
-
-// Upload to Cloudinary Function
 async function uploadToCloudinary(filePath) {
     try {
         const result = await cloudinary.uploader.upload(filePath, {
-            folder: 'seminar_uploads' // Optional: organize in a folder
+            folder: 'seminar_uploads'
         });
         return result.secure_url;
     } catch (error) {
         console.error('Cloudinary Upload Error:', error);
-        const errorMsg = error.message || JSON.stringify(error);
-        fs.writeFileSync('error.log', `[${new Date().toISOString()}] Cloudinary Error: ${errorMsg}\n`, { flag: 'a' });
-        throw new Error('Cloudinary Upload Failed: ' + errorMsg);
+        throw new Error('Cloudinary Upload Failed: ' + (error.message || JSON.stringify(error)));
     }
 }
 
@@ -133,19 +104,16 @@ app.post('/api/register', upload.single('paymentProof'), async (req, res) => {
         filePath = req.file.path;
         const { name, email, phone } = req.body;
 
-        // 1. Calculate Series
+        // 1. Get current count for Ticket Series
+        const dbRef = ref(db);
+        const snapshot = await get(child(dbRef, 'registrations'));
         let series = 1;
-        if (fs.existsSync(CSV_FILE)) {
-            const content = fs.readFileSync(CSV_FILE, 'utf8');
-            // Check non-empty lines
-            const lines = content.trim().split('\n');
-            // If only header, series=1. If header+1row, series=2.
-            // Series = number of actual data rows + 1
-            if (lines.length > 1) {
-                series = lines.length;
-            }
+
+        if (snapshot.exists()) {
+            series = snapshot.size + 1;
         }
-        const formattedSeries = String(series).padStart(4, '0'); // 4 Digits
+
+        const formattedSeries = String(series).padStart(4, '0');
 
         // 2. Extract Components
         const fn = name ? name.substring(0, 2).toUpperCase() : 'XX';
@@ -156,16 +124,18 @@ app.post('/api/register', upload.single('paymentProof'), async (req, res) => {
         // 3. Construct ID: {FN}{EM}{YEAR}{PN}{SERIES}
         const ticketId = `${fn}${em}${year}${pn}${formattedSeries}`;
 
-        // Upload to Cloudinary
+        // 4. Upload to Cloudinary
         const screenshotUrl = await uploadToCloudinary(filePath);
 
-        // Save to Excel
-        await appendToExcel({
+        // 5. Save to Firebase Realtime Database
+        const newRegRef = push(child(dbRef, 'registrations'));
+        await set(newRegRef, {
             ticketId,
             name,
             email,
             phone,
-            screenshotUrl
+            screenshotUrl,
+            timestamp: new Date().toISOString()
         });
 
         // Delete local temp file
@@ -180,19 +150,14 @@ app.post('/api/register', upload.single('paymentProof'), async (req, res) => {
 
         // Attempt cleanup if error occurred
         if (filePath && fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
+            try { fs.unlinkSync(filePath); } catch (e) { /* ignore */ }
         }
 
-        // Return the specific error message to the frontend for better debugging
-        const errorMessage = error.message || 'Server error during registration.';
-        res.status(500).json({ success: false, message: errorMessage });
+        res.status(500).json({ success: false, message: error.message || 'Server error during registration.' });
     }
 });
 
-// 2. Admin Login
-// 2. Admin Login (Removed)
-
-// 4. Secure Admin Download Route
+// 2. Admin Login & Download Page
 app.get('/admin', (req, res) => {
     const html = `
     <!DOCTYPE html>
@@ -214,7 +179,7 @@ app.get('/admin', (req, res) => {
                 </div>
                 <button type="submit" 
                     class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98]">
-                    Download Data
+                    Download CSV Data
                 </button>
             </form>
         </div>
@@ -224,19 +189,51 @@ app.get('/admin', (req, res) => {
     res.send(html);
 });
 
-app.post('/admin', (req, res) => {
+// 3. Handle Download
+app.post('/admin', async (req, res) => {
     const { password } = req.body;
     if (password === 'admin@123') {
-        if (fs.existsSync(CSV_FILE)) {
-            res.download(CSV_FILE, 'registrations.csv');
-        } else {
-            res.status(404).send('No data found yet.');
+        try {
+            const dbRef = ref(db);
+            const snapshot = await get(child(dbRef, 'registrations'));
+
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                let csvContent = 'Sr No,Ticket ID,Full Name,Email,Phone,Payment Screenshot,Timestamp\n';
+                let srNo = 1;
+
+                // Iterate over objects
+                Object.values(data).forEach(reg => {
+                    const safeName = `"${(reg.name || '').replace(/"/g, '""')}"`;
+                    const safeEmail = `"${(reg.email || '').replace(/"/g, '""')}"`;
+                    const safePhone = `"${(reg.phone || '').replace(/"/g, '""')}"`;
+                    const time = reg.timestamp ? new Date(reg.timestamp).toLocaleString() : '';
+
+                    csvContent += `${srNo},${reg.ticketId},${safeName},${safeEmail},${safePhone},${reg.screenshotUrl},${time}\n`;
+                    srNo++;
+                });
+
+                res.header('Content-Type', 'text/csv');
+                res.attachment('registrations.csv');
+                return res.send(csvContent);
+            } else {
+                return res.status(404).send('No registrations found yet.');
+            }
+        } catch (error) {
+            console.error('Admin Fetch Error:', error);
+            res.status(500).send('Error fetching data from database.');
         }
     } else {
         res.status(401).send('<h1 style="color:red;text-align:center;margin-top:20%">Incorrect Password! <a href="/admin">Try Again</a></h1>');
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-});
+// Need to export app for Vercel
+module.exports = app;
+
+// Only listen if run directly (local development)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server running at http://localhost:${PORT}`);
+    });
+}
